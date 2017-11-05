@@ -18,37 +18,40 @@ namespace testing
 		m_stats = TestStats{};
 
 		bool all_succeded = true;
-		for (const auto * test : m_tests)
+		for (const auto & test : m_tests)
 		{
-			const auto test_result = test->run();
+			const auto test_result = test.run();
 			all_succeded &= test_result.m_succeded;
 
 			if (test_result.m_succeded)
-				track_succeded_test(test_result);
+				track_succeded_test(test, test_result);
 			else
-				track_failed_test(test_result);
+				track_failed_test(test, test_result);
 		}
 
 		m_stats.m_run_tests = m_stats.m_succeded_tests + m_stats.m_failed_tests;
 		return all_succeded;
 	}
 
-	void TestRunner::track_succeded_test(const TestResult & test_result)
+	void TestRunner::track_succeded_test(const Test & test, 
+										 const TestResult & test_result)
 	{
 		m_stats.m_succeded_tests++;
 	}
-	void TestRunner::track_failed_test(const TestResult & test_result)
+	void TestRunner::track_failed_test(const Test & test, 
+									   const TestResult & test_result)
 	{
 		m_stats.m_failed_tests++;
-		report_failure(test_result);
+		report_failure(test, test_result);
 	}
-	void TestRunner::report_failure(const TestResult & test_result) const
+	void TestRunner::report_failure(const Test & test, 
+									const TestResult & test_result) const
 	{
 		std::cout << test_result.m_fail_reason << std::endl;
 	}
 
 	void TestRunner::register_test(const Test & test)
 	{
-		m_tests.emplace_back(&test);
+		m_tests.emplace_back(test);
 	}
 }

@@ -7,14 +7,9 @@ namespace testing
 {
 	struct TestResult
 	{
-		explicit TestResult(const char * test_name)
-			: m_test_name{ test_name }
-		{}
-
 		operator bool() const { return m_succeded; }
 
 		bool m_succeded{ true };
-		const char * m_test_name{ nullptr };
 		unsigned m_line{ 0 };
 		std::string m_fail_reason;
 	};
@@ -28,10 +23,6 @@ namespace testing
 			: m_test_fn{ test }
 			, m_test_name{ name }
 		{}
-		Test(Test &&) = delete;
-		Test(const Test &) = delete;
-		Test & operator=(const Test &) = delete;
-		Test & operator=(const Test &&) = delete;
 
 		TestResult run() const;
 

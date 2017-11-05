@@ -11,18 +11,26 @@ namespace testing
 {
 	namespace impl
 	{
+		/// \brief	Helper for not including TestRunner here.
 		void register_test(const Test & test);
 	}
 
+	/// \brief	Runs all the tests that have been compiled.
 	bool run_all_tests();
 }
 
+/// \brief	Declares a variable name that won't be duplicated.
+///			The user needs to specify some value to have some context in case the compiler complains.
+#define TESTING_UNNAMED_VARIABLE(x)	TESTING_UNNAMED_VARIABLE_INNER(x)
+#define TESTING_UNNAMED_VARIABLE_INNER(x)	x ## _unnamed_var_ ## __LINE__ ## _ ## __COUNTER__
 
-#define _TESTING_REGISTER_TEST(test)	\
-static const bool test_registered ## test = []() { \
-		::testing::impl::register_test(test); \
+/// \brief	Register the test before main is called.
+#define _TESTING_REGISTER_TEST(func)	\
+namespace { namespace testing_impl { \
+static const bool TESTING_UNNAMED_VARIABLE(test_register ## func) = []() { \
+		::testing::impl::register_test(::testing::Test{ func, #func }); \
 		return true;	\
-	}()
+	}(); } }
 
 #define TEST_ASSERT(cond)	if (!(cond))	throw std::exception{ #cond, __LINE__ }
 #define TEST_FAILED()		TEST_ASSERT(false)
@@ -30,8 +38,7 @@ static const bool test_registered ## test = []() { \
 
 #define TEST(func)	\
 void func();		\
-static const ::testing::Test test_ ## func{ func, #func };	\
-_TESTING_REGISTER_TEST(test_ ## func); \
+_TESTING_REGISTER_TEST(func); \
 void func()
 
 

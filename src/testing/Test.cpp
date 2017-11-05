@@ -6,7 +6,7 @@ namespace testing
 {
 	TestResult Test::run() const
 	{
-		TestResult result{ get_name() };
+		TestResult result{};
 
 		try
 		{

@@ -5,6 +5,7 @@
 
 namespace testing
 {
+	/// \brief	Thrown when a test fails, contains information about failure.
 	class TestFailedException : public std::exception
 	{
 	public:
@@ -13,7 +14,8 @@ namespace testing
 			, m_line{ line }
 		{}
 
-		const char * what() const { return get_failed_condition(); }
+		const char * what() const override { return get_failed_condition(); }
+
 		const char * get_failed_condition() const { return m_failed_cond; }
 		unsigned get_line() const { return m_line; }
 
