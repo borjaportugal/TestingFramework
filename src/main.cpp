@@ -5,7 +5,6 @@
 #include <iostream>
 
 #include "testing\testing.h"
-#include "testing\TestRunner.h"
 
 TEST(a_test)
 {
