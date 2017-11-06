@@ -31,6 +31,7 @@
     <ClInclude Include="src\testing\TestFailedException.h" />
     <ClInclude Include="src\testing\testing.h" />
     <ClInclude Include="src\testing\TestRunner.h" />
+    <ClInclude Include="src\testing\TestingConfig.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{7B5DC6BE-B7BB-4409-A7FB-21A4E4F2D807}</ProjectGuid>

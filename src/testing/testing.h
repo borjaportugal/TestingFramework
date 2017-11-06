@@ -3,6 +3,7 @@
 
 #include "Test.h"
 #include "TestFailedException.h"
+#include "TestingConfig.h"
 
 #include <string>
 #include <vector>
@@ -16,7 +17,7 @@ namespace testing
 	}
 
 	/// \brief	Runs all the tests that have been compiled.
-	bool run_all_tests();
+	bool run_all_tests(const TestingConfig & config = TestingConfig{});
 }
 
 /// \brief	Declares a variable name that won't be duplicated.
@@ -32,7 +33,9 @@ static const bool TESTING_UNNAMED_VARIABLE(test_register ## func) = []() { \
 		return true;	\
 	}(); } }
 
-#define TEST_ASSERT(cond)	if (!(cond))	throw std::exception{ #cond, __LINE__ }
+#define TEST_ASSERT(cond)	\
+	if (!(cond))	\
+		throw std::exception{ "Condition ( " #cond " ) not satisfied." , __LINE__ }
 #define TEST_FAILED()		TEST_ASSERT(false)
 #define TEST_SUCCEDED()		
 

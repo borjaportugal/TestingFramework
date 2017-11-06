@@ -13,9 +13,9 @@ namespace testing
 		}
 	}
 
-	bool run_all_tests()
+	bool run_all_tests(const TestingConfig & config)
 	{
-		return TestRunner::get_instance().run_all_tests();
+		return TestRunner::get_instance().run_all_tests(config);
 	}
 }
 
