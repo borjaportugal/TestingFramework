@@ -82,6 +82,7 @@ namespace testing
 		void register_test(const Test & test);
 	}
 
+	/// \brief	Base class for user defined categories.
 	class TestCategory
 	{
 	public:
@@ -97,7 +98,7 @@ namespace testing
 	private:
 		/// \brief	Called before the test is executed.
 		virtual void tear_up() {}
-		/// \brief	Called when the test has finished.
+		/// \brief	Called when the test has finished (if succeded).
 		virtual void tear_down() {}
 
 		/// \brief	For internal usage
@@ -165,8 +166,6 @@ namespace testing
 	bool run_all_tests(const TestingConfig & config = TestingConfig{});
 }
 
-#define _TESTTING_EXPAND(x)	x
-
 /// \brief	Declares a variable name that won't be duplicated.
 ///			The user needs to specify some value to have some context in case the compiler complains.
 #define _TESTING_UNNAMED_VARIABLE(x)	_TESTING_UNNAMED_VARIABLE_INNER(x, __LINE__, __COUNTER__)
@@ -184,10 +183,20 @@ namespace testing { namespace impl {														\
 } }
 
 #define _TESTING_DECLARE_TEST_INNER(category, name, func)	\
-	void func(); _TESTING_REGISTER_TEST(category, name, func); void func()
+	void func();											\
+	_TESTING_REGISTER_TEST(category, name, func);			\
+	void func()
 
 #define _TESTING_DECLARE_TEST(category, name)	\
 	_TESTING_DECLARE_TEST_INNER(category, name, category ##_## name)
+
+
+
+
+// =============================================================
+// Macros that the user can use are the ones from this point on.
+// =============================================================
+
 
 ///	\brief	If the condition is not satisfied the test fails.
 #define TEST_ASSERT(cond) do { if (!(cond))	throw std::exception{ "Condition ( " #cond " ) not satisfied." , __LINE__ }; } while (0)
@@ -202,7 +211,11 @@ namespace testing { namespace impl {														\
 /// \brief	Declares a test
 #define TEST_F(test_name)	_TESTING_DECLARE_TEST(global, test_name)
 
-/// \brief	Declares a test that has some 
+/// \brief	Declares a test within a category.
+///			Categories need to inherit from ::testing::TestCategory and member variables created in them are 
+///			accesible from the tests.
+///			Each test has its own instance of the category and therefore member variables.
+///			Variables are constructed just before running the test and destroyed after the test has finished (even if the test failed)
 #define TEST(test_category, test_name)													\
 	/* Wrap the test into a class that contains the needed data	*/						\
 	class TestRunner_ ## test_name : public test_category								\
