@@ -3,6 +3,9 @@
 
 #include <iostream>
 
+#define WIN32_LEAN_AND_MEAN 1
+#include <Windows.h>	// console colors
+
 namespace testing
 {
 	void TestingStats::dump(std::ostream & os) const
@@ -127,9 +130,29 @@ namespace testing
 	void TestRunner::report_failure(const Test & test,
 									const TestResult & test_result) const
 	{
+		set_console_color(ConsoleColors::RED);
 		get_ostream() << "Test " << test.get_name() << " failed: "
 			<< test_result.m_fail_reason
 			<< '\n';
+		set_console_color(ConsoleColors::DEFAULT);
+	}
+
+	void TestRunner::set_console_color(ConsoleColors color) const
+	{
+		WORD color_attr;
+		switch (color)
+		{
+		case ConsoleColors::DEFAULT:
+		{
+			color_attr = 0x07;
+		} break;
+		case ConsoleColors::RED:
+		{
+			color_attr = 0x04;
+		} break;
+		}
+
+		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), color_attr);
 	}
 
 	void TestRunner::register_test(const Test & test)

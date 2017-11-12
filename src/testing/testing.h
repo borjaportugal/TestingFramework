@@ -135,6 +135,13 @@ namespace testing
 		bool verbose() const { return m_config.m_verbose; }
 		std::ostream & get_ostream() const;
 
+		enum class ConsoleColors
+		{
+			DEFAULT,
+			RED,
+		};
+		void set_console_color(ConsoleColors color) const;
+
 		TestingConfig m_config;
 
 		/// \brief	Stats about the last execution of tests.
