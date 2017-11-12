@@ -14,58 +14,7 @@ namespace testing
 		bool m_verbose{ true };
 		bool m_abort_on_failure{ false };
 	};
-
-	struct TestResult
-	{
-		operator bool() const { return m_succeded; }
-
-		bool m_succeded{ true };
-		unsigned m_line{ 0 };
-		std::string m_fail_reason;
-	};
-
-	/// \brief	Thrown when a test fails, contains information about failure.
-	class TestFailedException : public std::exception
-	{
-	public:
-		TestFailedException(const char * failed_condition, unsigned line)
-			: m_failed_cond{ failed_condition }
-			, m_line{ line }
-		{}
-
-		const char * what() const override { return get_failed_condition(); }
-
-		const char * get_failed_condition() const { return m_failed_cond; }
-		unsigned get_line() const { return m_line; }
-
-	private:
-		const char * m_failed_cond{ nullptr };
-		unsigned m_line{ 0 };
-
-	};
-
-	/// \brief	Stores and runs a unit test.
-	class Test
-	{
-		using test_fn = void(*)();
-
-	public:
-		explicit Test(test_fn test, const char * name)
-			: m_test_fn{ test }
-			, m_test_name{ name }
-		{}
-
-		TestResult run() const;
-
-		const char * get_name() const { return m_test_name; }
-
-	private:
-		void run_test() const;
-
-		test_fn m_test_fn{ nullptr };
-		const char * m_test_name{ "" };
-	};
-
+		
 	///	\brief Stores statistics of the last run tests.
 	struct TestingStats
 	{
@@ -78,9 +27,82 @@ namespace testing
 
 	namespace impl
 	{
+		struct TestResult
+		{
+			operator bool() const { return m_succeded; }
+
+			bool m_succeded{ true };
+			unsigned m_line{ 0 };
+			std::string m_fail_reason;
+		};
+
+		/// \brief	Thrown when a test fails, contains information about failure.
+		class TestFailedException : public std::exception
+		{
+		public:
+			TestFailedException(const char * failed_condition, unsigned line)
+				: m_failed_cond{ failed_condition }
+				, m_line{ line }
+			{}
+
+			const char * what() const override { return get_failed_condition(); }
+
+			const char * get_failed_condition() const { return m_failed_cond; }
+			unsigned get_line() const { return m_line; }
+
+		private:
+			const char * m_failed_cond{ nullptr };
+			unsigned m_line{ 0 };
+
+		};
+
+		/// \brief	Stores and runs a unit test.
+		class Test
+		{
+			using test_fn = void(*)();
+
+		public:
+			explicit Test(test_fn test, const char * name)
+				: m_test_fn{ test }
+				, m_test_name{ name }
+			{}
+
+			TestResult run() const;
+
+			const char * get_name() const { return m_test_name; }
+
+		private:
+			void run_test() const;
+
+			test_fn m_test_fn{ nullptr };
+			const char * m_test_name{ "" };
+		};
+
 		/// \brief	Helper for not including TestRunner here.
 		void register_test(const Test & test);
 	}
+
+	class TestCategory
+	{
+	public:
+		virtual ~TestCategory() = default;
+		
+		void run()
+		{
+			tear_up();
+			run_impl();
+			tear_down();
+		}
+
+	private:
+		/// \brief	Called before the test is executed.
+		virtual void tear_up() {}
+		/// \brief	Called when the test has finished.
+		virtual void tear_down() {}
+
+		/// \brief	For internal usage
+		virtual void run_impl() = 0;
+	};
 
 	/// \brief	Main class in charge of running all tests and getting statistics.
 	class TestRunner
@@ -94,6 +116,9 @@ namespace testing
 		TestingStats get_stats() const { return m_stats; }
 
 	private:
+		using Test = impl::Test;
+		using TestResult = impl::TestResult;
+
 		// test registration
 		void register_test(const Test & test);
 		friend void ::testing::impl::register_test(const Test &);
@@ -133,21 +158,29 @@ namespace testing
 	bool run_all_tests(const TestingConfig & config = TestingConfig{});
 }
 
+#define _TESTTING_EXPAND(x)	x
+
 /// \brief	Declares a variable name that won't be duplicated.
 ///			The user needs to specify some value to have some context in case the compiler complains.
-#define TESTING_UNNAMED_VARIABLE(x)	TESTING_UNNAMED_VARIABLE_INNER(x)
-#define TESTING_UNNAMED_VARIABLE_INNER(x)	x ## _unnamed_var_ ## __LINE__ ## _ ## __COUNTER__
+#define _TESTING_UNNAMED_VARIABLE(x)	_TESTING_UNNAMED_VARIABLE_INNER(x, __LINE__, __COUNTER__)
+#define _TESTING_UNNAMED_VARIABLE_INNER(x, line, counter)	_TESTING_UNNAMED_VARIABLE_INNER2(x, line, counter)
+#define _TESTING_UNNAMED_VARIABLE_INNER2(x, line, counter)	x ## _unnamed_var_ ## line ## _ ## counter
 
 /// \brief	Register the test before main is called.
-#define _TESTING_REGISTER_TEST(func)											\
-namespace { namespace testing_impl {											\
-	static const bool TESTING_UNNAMED_VARIABLE(test_register ## func) = []()	\
-	{																			\
-		::testing::impl::register_test(::testing::Test{ func, #func });			\
-		return true;															\
-	}();																		\
+#define _TESTING_REGISTER_TEST(category, name, func)										\
+namespace testing { namespace impl {														\
+	static const bool _TESTING_UNNAMED_VARIABLE(test_register_ ## func) = []()	\
+	{																						\
+		::testing::impl::register_test(::testing::impl::Test{ func, #category "::" #name });\
+		return true;																		\
+	}();																					\
 } }
 
+#define _TESTING_DECLARE_TEST_INNER(category, name, func)	\
+	void func(); _TESTING_REGISTER_TEST(category, name, func); void func()
+
+#define _TESTING_DECLARE_TEST(category, name)	\
+	_TESTING_DECLARE_TEST_INNER(category, name, category ##_## name)
 
 ///	\brief	If the condition is not satisfied the test fails.
 #define TEST_ASSERT(cond) do { if (!(cond))	throw std::exception{ "Condition ( " #cond " ) not satisfied." , __LINE__ }; } while (0)
@@ -159,8 +192,20 @@ namespace { namespace testing_impl {											\
 ///	lets the test continue executing.
 #define TEST_SUCCEDED()		
 
-/// \brief	Declares a test 
-#define TEST(func) void func(); _TESTING_REGISTER_TEST(func);	void func()
+/// \brief	Declares a test
+#define TEST_F(test_name)	_TESTING_DECLARE_TEST(global, test_name)
+
+/// \brief	Declares a test that has some 
+#define TEST(test_category, test_name)													\
+	/* Wrap the test into a class that contains the needed data	*/						\
+	class TestRunner_ ## test_name : public test_category								\
+	{																					\
+		void run_impl() override;														\
+	};																					\
+	/* What will be called by the TestRunner */											\
+	_TESTING_DECLARE_TEST(test_category, test_name) { TestRunner_ ## test_name test; test.run(); }	\
+	void TestRunner_ ## test_name::run_impl()
+	
 
 
 

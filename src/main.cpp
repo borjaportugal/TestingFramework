@@ -6,19 +6,50 @@
 
 #include "testing\testing.h"
 
-TEST(a_test)
+
+TEST_F(a_test)
 {
 	TEST_ASSERT(1 != 2);
 }
 
-TEST(an_other_test)
+TEST_F(an_other_test)
 {
 	TEST_ASSERT(1 == 2);
 }
 
-TEST(third_test)
+TEST_F(third_test)
 {
 	TEST_ASSERT(1 != 2);
+}
+
+struct ExampleCategory : public ::testing::TestCategory
+{
+	int i = 0;
+
+	void tear_up() override
+	{
+		std::cout << "Pre test execution\n";
+	}
+
+	void tear_down() override
+	{
+		std::cout << "Post test execution\n";
+	}
+};
+
+TEST(ExampleCategory, a_test)
+{
+	TEST_ASSERT(i++ == 0);
+}
+
+TEST(ExampleCategory, an_other_test)
+{
+	TEST_ASSERT(i == 0);
+}
+
+TEST(ExampleCategory, third_test)
+{
+	TEST_ASSERT(++i == 0);
 }
 
 int main()

@@ -13,41 +13,44 @@ namespace testing
 	}
 
 #pragma region // Test
-	TestResult Test::run() const
+	namespace impl
 	{
-		TestResult result{};
-
-		try
+		TestResult Test::run() const
 		{
-			run_test();
-		}
-		catch (const TestFailedException & ex)
-		{
-			result.m_succeded = false;
-			result.m_fail_reason = ex.get_failed_condition();
-			result.m_line = ex.get_line();
-		}
-		catch (const std::exception & ex)
-		{
-			result.m_succeded = false;
-			result.m_fail_reason = ex.what();
-		}
-		catch (...)
-		{
-			result.m_succeded = false;
-			result.m_fail_reason = "Unknown reason.";
+			TestResult result{};
+
+			try
+			{
+				run_test();
+			}
+			catch (const TestFailedException & ex)
+			{
+				result.m_succeded = false;
+				result.m_fail_reason = ex.get_failed_condition();
+				result.m_line = ex.get_line();
+			}
+			catch (const std::exception & ex)
+			{
+				result.m_succeded = false;
+				result.m_fail_reason = ex.what();
+			}
+			catch (...)
+			{
+				result.m_succeded = false;
+				result.m_fail_reason = "Unknown reason.";
+			}
+
+			return result;
 		}
 
-		return result;
-	}
 
-
-	void Test::run_test() const
-	{
-		m_test_fn();
+		void Test::run_test() const
+		{
+			m_test_fn();
+		}
 	}
 #pragma endregion
-
+	
 #pragma region // TestRunner
 
 	TestRunner & TestRunner::get_instance()
