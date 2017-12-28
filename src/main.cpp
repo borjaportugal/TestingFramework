@@ -11,17 +11,17 @@ found in the top-level directory of this distribution.
 #include "testing\testing.h"
 
 
-TEST_F(a_test)
+TEST_F(test_that_passes)
 {
 	TEST_ASSERT(1 != 2);
 }
 
-TEST_F(an_other_test)
+TEST_F(test_that_fails)
 {
 	TEST_ASSERT(1 == 2);
 }
 
-TEST_F(third_test)
+TEST_F(test_that_passes_2)
 {
 	TEST_ASSERT(1 != 2);
 }
@@ -29,31 +29,64 @@ TEST_F(third_test)
 struct ExampleCategory : public ::testing::TestCategory
 {
 	int i = 0;
-
-	void tear_up() override
-	{
-		std::cout << "Pre test execution\n";
-	}
-
-	void tear_down() override
-	{
-		std::cout << "Post test execution\n";
-	}
 };
 
-TEST(ExampleCategory, a_test)
+TEST(ExampleCategory, test_that_passes)
 {
 	TEST_ASSERT(i++ == 0);
 }
 
-TEST(ExampleCategory, an_other_test)
+TEST(ExampleCategory, test_that_passes_2)
 {
 	TEST_ASSERT(i == 0);
 }
 
-TEST(ExampleCategory, third_test)
+TEST(ExampleCategory, test_that_fails)
 {
 	TEST_ASSERT(++i == 0);
+}
+
+
+struct TestOnExitExample : public ::testing::TestCategory
+{
+	static int i;
+};
+int TestOnExitExample::i = 0;
+
+TEST(TestOnExitExample, test_1)
+{
+	TEST_ASSERT(i++ == 0);
+}
+TEST(TestOnExitExample, test_2)
+{
+	TEST_ON_EXIT()
+	{
+		// this will be executed when the test finishes,
+		// either succeeds or fails
+		i = 0;
+	};
+
+	// this is true
+	TEST_ASSERT(i == 1);
+}
+
+TEST(TestOnExitExample, test_3)
+{
+	TEST_ON_EXIT()
+	{
+		// this will be executed when the test finishes,
+		// either succeeds or fails
+		i = 33;
+	};
+
+	// this is false
+	TEST_ASSERT(i != 0);
+}
+
+TEST(TestOnExitExample, test_4)
+{
+	// this is true
+	TEST_ASSERT(i == 33);
 }
 
 int main()
